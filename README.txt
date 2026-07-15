@@ -1,3 +1,4 @@
+VIJU
 Project Management with Git - Syllabus Improvement Repository
 
 Purpose
