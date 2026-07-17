@@ -1,0 +1,51 @@
+name: Check Risks
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  check-risks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check changed Markdown and text files for Risks
+        shell: bash
+        run: |
+          FAILED=0
+
+          FILES=$(git diff --name-only \
+            "${{ github.event.pull_request.base.sha }}" \
+            "${{ github.event.pull_request.head.sha }}" \
+            -- '*.md' '*.txt')
+
+          if [ -z "$FILES" ]; then
+            echo "No Markdown or text files changed."
+            exit 0
+          fi
+
+          while IFS= read -r file
+          do
+            [ -z "$file" ] && continue
+            [ ! -f "$file" ] && continue
+
+            echo "Checking: $file"
+
+            if ! grep -qi "Risks" "$file"; then
+              echo "ERROR: $file does not contain a 'Risks' section."
+              FAILED=1
+            fi
+          done <<< "$FILES"
+
+          if [ "$FAILED" -eq 1 ]; then
+            echo "Risks check failed."
+            exit 1
+          fi
+
+          echo "Risks check passed."
